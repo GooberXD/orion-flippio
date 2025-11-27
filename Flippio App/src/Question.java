@@ -13,7 +13,7 @@ public abstract class Question {
         return this.correctAnswer.equalsIgnoreCase(answer);
     }
 
-    //test gitpush from intellij
+    //test gitpush from intellij, fr fr
 
     public String getQuestionText() {
         return questionText;
