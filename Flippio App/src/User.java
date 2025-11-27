@@ -18,6 +18,7 @@ public abstract class User {
     public String getRole() { return role; } // edited
     public void setRole(String role) {
 
+        // edited, Ligaray, 11272025
         if(this.role.equalsIgnoreCase("Student")) {
             this.role = "Student";
         }else if(this.role.equalsIgnoreCase("Teacher")) {
