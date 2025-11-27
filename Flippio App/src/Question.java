@@ -13,6 +13,8 @@ public abstract class Question {
         return this.correctAnswer.equalsIgnoreCase(answer);
     }
 
+    //test gitpush from intellij
+
     public String getQuestionText() {
         return questionText;
     }
