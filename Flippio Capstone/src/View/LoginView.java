@@ -3,96 +3,100 @@ package View;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 
 public class LoginView extends JFrame {
-
-    // --- Components required by the Controller ---
     private JTextField idField;
     private JPasswordField passField;
-    private JButton btnSubmitLogin; // The actual button the controller listens to
+    private JButton btnSubmitLogin;
 
-    // --- Navigation Components ---
-    private JPanel cards; // The container for switching views
+    // Signup Components
+    private JTextField signNameField;
+    private JTextField signIdField;
+    private JTextField signRoleField;
+    private JPasswordField signPassField;
+    private JButton btnSubmitSignup;
+
+   // Navigation and Design
     private CardLayout cardLayout;
-
-    // --- Design Constants ---
-    private final Color COLOR_BG = new Color(205, 185, 240); // Lavender
-    private final Color COLOR_DARK = new Color(25, 25, 25);
-    private final Font FONT_MAIN = new Font("Montserrat", Font.BOLD, 14);
+    private JPanel cardContainer; // The container inside the purple box
+    private final Color COL_WHITE_BG = Color.WHITE;
+    private final Color COL_PURPLE_BG = new Color(164, 172, 249); // #A4ACF9
+    private final Color COL_BEIGE_INPUT = new Color(235, 207, 178); // #EBCFB2
+    private final Color COL_DARK = new Color(23, 20, 29); // #17141D
+    private final Font FONT_LABEL = new Font("Montserrat", Font.BOLD, 15);
 
     public LoginView() {
-        // 1. Window Setup
         setTitle("Flippio");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(850, 500);
+        setSize(900, 550);
         setLocationRelativeTo(null);
         setResizable(true);
 
-        // 2. Main Layout (CardLayout to switch between Landing and Forms)
+        // Outer White Background
+        JPanel outerPanel = new JPanel(new BorderLayout());
+        outerPanel.setBackground(COL_WHITE_BG);
+        // Padding to create the white border effect around the purple box
+        outerPanel.setBorder(new EmptyBorder(30, 30, 30, 30));
+
+        // Rounded Purple Box
+        RoundedPanel purpleCard = new RoundedPanel();
+        purpleCard.setLayout(new BorderLayout());
+
         cardLayout = new CardLayout();
-        cards = new JPanel(cardLayout);
-        cards.setBackground(COLOR_BG);
+        cardContainer = new JPanel(cardLayout);
+        cardContainer.setOpaque(false);
+        cardContainer.add(createLandingPanel(), "LANDING");
+        cardContainer.add(createLoginPanel(), "LOGIN_FORM");
+        cardContainer.add(createSignupPanel(), "SIGNUP_FORM");
 
-        // 3. Create the Panels
-        JPanel landingPanel = createLandingPanel();
-        JPanel loginFormPanel = createLoginFormPanel();
-        JPanel createAccountPanel = createSignupPlaceholder();
+        purpleCard.add(cardContainer, BorderLayout.CENTER);
+        outerPanel.add(purpleCard, BorderLayout.CENTER);
 
-        // 4. Add them to the Card Deck
-        cards.add(landingPanel, "LANDING");
-        cards.add(loginFormPanel, "LOGIN_FORM");
-        cards.add(createAccountPanel, "SIGNUP_FORM");
-
-        setContentPane(cards);
+        setContentPane(outerPanel);
     }
 
-    // =========================================================
-    // PANEL 1: LANDING PAGE (Logo + 2 Options)
-    // =========================================================
+    //  LANDING PANEL
     private JPanel createLandingPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(COLOR_BG);
+        panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // --- Left Side: Logo ---
+        // Left: Logo
         JLabel logoLabel = new JLabel();
         ImageIcon icon = loadLogoIcon("flippio_logo.svg");
-        if(icon != null) {
+        if(icon != null){
             logoLabel.setIcon(icon);
-        } else {
-            logoLabel.setText("Logo Missing");
+        }else{
+            logoLabel.setText("Flippio Logo");
         }
 
         gbc.gridx = 0; gbc.gridy = 0;
         gbc.weightx = 0.5;
+        gbc.anchor = GridBagConstraints.CENTER;
         panel.add(logoLabel, gbc);
 
-        // --- Right Side: Navigation Buttons ---
+        // Buttons
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         buttonPanel.setOpaque(false);
 
-        JButton btnGoToLogin = new RoundedButton("Log In", COLOR_DARK, Color.WHITE);
-        JButton btnGoToCreate = new RoundedButton("Create an Account", new Color(0,0,0,0), COLOR_DARK);
+        JButton btnGoToLogin = new RoundedButton("Log In", COL_DARK, Color.WHITE);
+        JButton btnGoToCreate = new RoundedButton("Create an Account", new Color(0,0,0,0), COL_DARK);
 
-        // --- NAVIGATION & FOCUS LOGIC ---
+        // Navigation
         btnGoToLogin.addActionListener(e -> {
-            cardLayout.show(cards, "LOGIN_FORM");
-
-            // KEYBOARD RESPONSIVENESS:
-            // 1. Set the "Sign In" button as the default (Enter key triggers it)
+            cardLayout.show(cardContainer, "LOGIN_FORM");
             getRootPane().setDefaultButton(btnSubmitLogin);
-
-            // 2. Move cursor to the ID field immediately
             SwingUtilities.invokeLater(() -> idField.requestFocusInWindow());
         });
 
         btnGoToCreate.addActionListener(e -> {
-            cardLayout.show(cards, "SIGNUP_FORM");
-            getRootPane().setDefaultButton(null); // Reset default button
+            cardLayout.show(cardContainer, "SIGNUP_FORM");
+            getRootPane().setDefaultButton(btnSubmitSignup);
+            SwingUtilities.invokeLater(() -> signNameField.requestFocusInWindow());
         });
 
         buttonPanel.add(btnGoToLogin);
@@ -105,134 +109,259 @@ public class LoginView extends JFrame {
         return panel;
     }
 
-    // =========================================================
-    // PANEL 2: LOGIN FORM (Inputs + Submit)
-    // =========================================================
-    private JPanel createLoginFormPanel() {
+    // LOGIN PANEL
+    private JPanel createLoginPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(COLOR_BG);
+        panel.setOpaque(false);
+
+        JPanel centerBox = new JPanel();
+        centerBox.setLayout(new BoxLayout(centerBox, BoxLayout.Y_AXIS));
+        centerBox.setOpaque(false);
+
+        // Logo (Smaller for Login screen)
+        JLabel logoLabel = new JLabel();
+        ImageIcon icon = loadLogoIcon("flippio_logo.svg");
+        if(icon != null) {
+            // Scale down logo slightly for this view if needed, or use same
+            logoLabel.setIcon(icon);
+        } else {
+            logoLabel.setText("Flippio");
+            logoLabel.setFont(new Font("Montserrat", Font.BOLD, 30));
+        }
+        logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Inputs
+        JLabel lblId = createLabel("ID Number:");
+        idField = createBeigeField();
+
+        JLabel lblPass = createLabel("Password:");
+        passField = createBeigePasswordField();
+
+        // Submit Button
+        btnSubmitLogin = new RoundedButton("Sign In", COL_DARK, Color.WHITE);
+        btnSubmitLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Back Button
+        JButton btnBack = createBackButton();
+
+        // keyboard
+        idField.addActionListener(e -> passField.requestFocusInWindow());
+        passField.addActionListener(e -> btnSubmitLogin.doClick());
+
+
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topBar.setOpaque(false);
+        topBar.add(btnBack);
+
+        centerBox.add(logoLabel);
+        centerBox.add(Box.createVerticalStrut(30));
+
+        // Field Group
+        centerBox.add(lblId);
+        centerBox.add(Box.createVerticalStrut(5));
+        centerBox.add(idField);
+        centerBox.add(Box.createVerticalStrut(15));
+        centerBox.add(lblPass);
+        centerBox.add(Box.createVerticalStrut(5));
+        centerBox.add(passField);
+        centerBox.add(Box.createVerticalStrut(30));
+        centerBox.add(btnSubmitLogin);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        panel.add(topBar, gbc); // Add back button at top left
+
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(centerBox, gbc);
+
+        return panel;
+    }
+
+    // SIGNUP PANEL
+    private JPanel createSignupPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
 
+        // Form
         JPanel formBox = new JPanel();
         formBox.setLayout(new BoxLayout(formBox, BoxLayout.Y_AXIS));
         formBox.setOpaque(false);
-        formBox.setBorder(new EmptyBorder(20, 40, 20, 40));
+        formBox.setBorder(new EmptyBorder(0, 50, 0, 50));
 
-        // Back Button
-        JButton btnBack = new JButton("← Back");
-        btnBack.setContentAreaFilled(false);
-        btnBack.setBorderPainted(false);
-        btnBack.setFont(new Font("SansSerif", Font.BOLD, 12));
-        btnBack.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // Navigation Logic
-        btnBack.addActionListener(e -> {
-            cardLayout.show(cards, "LANDING");
-            getRootPane().setDefaultButton(null); // Reset Enter key behavior
-        });
-
-        // Inputs
-        JLabel lblId = new JLabel("ID / Username");
-        lblId.setFont(FONT_MAIN);
-        idField = new JTextField();
-        styleField(idField);
-
-        JLabel lblPass = new JLabel("Password");
-        lblPass.setFont(FONT_MAIN);
-        passField = new JPasswordField();
-        styleField(passField);
-
-        // THE BUTTON CONTROLLER LISTENS TO
-        btnSubmitLogin = new RoundedButton("Sign In", COLOR_DARK, Color.WHITE);
-
-        // --- KEYBOARD LISTENERS ---
-
-        // 1. Pressing Enter in ID Field -> Jumps to Password Field
-        idField.addActionListener(e -> passField.requestFocusInWindow());
-
-        // 2. Pressing Enter in Password Field -> Simulates Click on Submit Button
-        passField.addActionListener(e -> btnSubmitLogin.doClick());
-
-        // Layout Adding
+        JButton btnBack = createBackButton();
         formBox.add(btnBack);
         formBox.add(Box.createVerticalStrut(20));
-        formBox.add(lblId);
+
+        // Fields
+        signNameField = addLabelAndField(formBox, "Name:");
+        signIdField = addLabelAndField(formBox, "ID Number:");
+        signRoleField = addLabelAndField(formBox, "Student / Teacher:");
+
+        formBox.add(createLabel("Password:"));
         formBox.add(Box.createVerticalStrut(5));
-        formBox.add(idField);
-        formBox.add(Box.createVerticalStrut(15));
-        formBox.add(lblPass);
-        formBox.add(Box.createVerticalStrut(5));
-        formBox.add(passField);
+        signPassField = createBeigePasswordField();
+        formBox.add(signPassField);
         formBox.add(Box.createVerticalStrut(30));
-        formBox.add(btnSubmitLogin);
 
-        panel.add(formBox);
+
+        btnSubmitSignup = new RoundedButton("Create Account", COL_DARK, Color.WHITE);
+        btnSubmitSignup.setPreferredSize(new Dimension(180, 40));
+
+        // keyboard
+        signNameField.addActionListener(e -> signIdField.requestFocusInWindow());
+        signIdField.addActionListener(e -> signRoleField.requestFocusInWindow());
+        signRoleField.addActionListener(e -> signPassField.requestFocusInWindow());
+        signPassField.addActionListener(e -> btnSubmitSignup.doClick());
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.weightx = 0.5;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        panel.add(formBox, gbc);
+
+        JPanel profilePanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int cx = getWidth() / 2;
+                int cy = getHeight() / 2;
+
+                g2.setColor(COL_DARK);
+
+                // Head
+                int headSize = 100;
+                g2.fillOval(cx - (headSize/2), cy - 80, headSize, headSize);
+
+                // Body (Shoulders)
+                // Using a GeneralPath for smoother shoulder look or simple Arc
+                g2.fillRoundRect(cx - 75, cy + 25, 150, 120, 90, 90);
+            }
+        };
+        profilePanel.setOpaque(false);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.5;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(profilePanel, gbc);
+
         return panel;
     }
+    class RoundedPanel extends JPanel {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    private JPanel createSignupPlaceholder() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(COLOR_BG);
-        JLabel lbl = new JLabel("Create Account Feature Coming Soon");
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 20));
+            int strokeWidth = 3;
+            int arc = 40;
+            int w = getWidth() - strokeWidth;
+            int h = getHeight() - strokeWidth;
 
-        JButton btnBack = new JButton("Back");
-        btnBack.addActionListener(e -> cardLayout.show(cards, "LANDING"));
+            // Shift x,y by stroke/2 to keep outline inside bounds
+            int x = strokeWidth / 2;
+            int y = strokeWidth / 2;
 
-        JPanel container = new JPanel(new FlowLayout());
-        container.setOpaque(false);
-        container.add(lbl);
-        container.add(btnBack);
+            // 1. Draw Background
+            g2.setColor(COL_PURPLE_BG);
+            g2.fillRoundRect(x, y, w, h, arc, arc);
 
-        panel.add(container);
-        return panel;
+            // 2. Draw Outline
+            g2.setColor(Color.BLACK);
+            g2.setStroke(new BasicStroke(strokeWidth));
+            g2.drawRoundRect(x, y, w, h, arc, arc);
+        }
     }
 
-    // =========================================================
-    // HELPER METHODS
-    // =========================================================
+    private JLabel createLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(FONT_LABEL);
+        l.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return l;
+    }
 
-    private void styleField(JTextField field) {
-        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        field.setPreferredSize(new Dimension(250, 40));
-        field.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_DARK, 1),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+    private JTextField addLabelAndField(JPanel panel, String text) {
+        panel.add(createLabel(text));
+        panel.add(Box.createVerticalStrut(5));
+        JTextField tf = createBeigeField();
+        panel.add(tf);
+        panel.add(Box.createVerticalStrut(15));
+        return tf;
+    }
+
+    private JTextField createBeigeField() {
+        JTextField tf = new JTextField();
+        styleBeigeInput(tf);
+        return tf;
+    }
+
+    private JPasswordField createBeigePasswordField() {
+        JPasswordField pf = new JPasswordField();
+        styleBeigeInput(pf);
+        return pf;
+    }
+
+    private void styleBeigeInput(JTextField tf) {
+        tf.setBackground(COL_BEIGE_INPUT);
+        // Thick black border
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK, 2),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
-        field.setBackground(new Color(255, 255, 255, 220));
+        tf.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        tf.setPreferredSize(new Dimension(280, 40));
+        tf.setMaximumSize(new Dimension(280, 40));
+        tf.setAlignmentX(Component.LEFT_ALIGNMENT);
+    }
+
+    private JButton createBackButton() {
+        JButton btn = new JButton("← Back");
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addActionListener(e -> {
+            cardLayout.show(cardContainer, "LANDING");
+            getRootPane().setDefaultButton(null);
+        });
+        return btn;
     }
 
     private ImageIcon loadLogoIcon(String path) {
         File f = new File(path);
-        if(f.exists()) {
-            return new ImageIcon(path);
-        }
+        if(f.exists()) return new ImageIcon(path);
         return null;
     }
 
     // =========================================================
-    // METHODS REQUIRED BY CONTROLLER
+    // GETTERS & LISTENERS (For Controller)
     // =========================================================
+    public String getIdInput() { return idField.getText(); }
+    public String getPassInput() { return new String(passField.getPassword()); }
 
-    public String getIdInput() {
-        return idField.getText();
-    }
-
-    public String getPassInput() {
-        return new String(passField.getPassword());
-    }
+    // Sign Up Getters
+    public String getSignName() { return signNameField.getText(); }
+    public String getSignId() { return signIdField.getText(); }
+    public String getSignRole() { return signRoleField.getText(); }
+    public String getSignPass() { return new String(signPassField.getPassword()); }
 
     public void addLoginListener(ActionListener listener) {
         btnSubmitLogin.addActionListener(listener);
     }
-
+    public void addSignupListener(ActionListener listener) {
+        if(btnSubmitSignup != null) btnSubmitSignup.addActionListener(listener);
+    }
     public void showErrorMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "Login Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     // =========================================================
-    // CUSTOM ROUNDED BUTTON
+    // ROUNDED BUTTON CLASS
     // =========================================================
     class RoundedButton extends JButton {
         private Color fillColor;
@@ -248,13 +377,10 @@ public class LoginView extends JFrame {
             setForeground(textColor);
             setFont(new Font("SansSerif", Font.BOLD, 14));
             setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-            // Fixed size for buttons
-            Dimension size = new Dimension(200, 50);
+            Dimension size = new Dimension(220, 45);
             setPreferredSize(size);
             setMaximumSize(size);
-            setMinimumSize(size);
-            setAlignmentX(Component.LEFT_ALIGNMENT);
+            setAlignmentX(Component.CENTER_ALIGNMENT);
         }
 
         @Override
@@ -265,12 +391,12 @@ public class LoginView extends JFrame {
             if (fillColor.getAlpha() == 0) {
                 // Outline Style
                 g2.setColor(textColor);
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
                 g2.setStroke(new BasicStroke(2));
+                g2.drawRoundRect(1, 1, getWidth()-3, getHeight()-3, 15, 15);
             } else {
                 // Filled Style
                 g2.setColor(fillColor);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
             }
             super.paintComponent(g2);
             g2.dispose();
