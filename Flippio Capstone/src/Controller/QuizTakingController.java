@@ -6,6 +6,8 @@ import Service.*;
 import Exception.*; // Custom Exceptions
 import java.util.Arrays;
 import javax.swing.JOptionPane;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class QuizTakingController {
     private QuizTakingView view;
@@ -26,8 +28,21 @@ public class QuizTakingController {
         this.userAnswers = new int[quiz.getQuestions().size()];
         Arrays.fill(userAnswers, -1);
 
+        // Setup the Navigation Circles (1 to N) 
+        view.setupQuestionNavigator(quiz.getQuestions().size());
+
+        // Handle Navigation Circle Clicks 
+        view.addNavigationListener(e -> {
+            saveCurrentAnswer(); // Save before jumping
+            // The view sets the ActionCommand to the index (e.g. "0", "1")
+            int targetIndex = Integer.parseInt(e.getActionCommand());
+            currentQuestionIndex = targetIndex;
+            loadQuestion(currentQuestionIndex);
+            updateButtons();
+        });
+
         loadQuestion(0);
-        updateButtons();
+        updateButtons(); // This will also initialize the circle colors
 
         this.view.getBtnNext().addActionListener(e -> nextQuestion());
         this.view.getBtnPrev().addActionListener(e -> prevQuestion());
@@ -39,8 +54,12 @@ public class QuizTakingController {
         view.setQuestionText("Question " + (index + 1) + ": " + q.getQuestionText());
         view.setOptions(q.getOptionsArray());
 
+        // Reload previous answer if it exists, otherwise clear selection
         if (userAnswers[index] != -1) {
             view.setSelectedOption(userAnswers[index]);
+        } else {
+            // If the view supports clearing selection, you might need a method for that.
+            // Currently, setOptions resets selection internally in your view, so this is fine.
         }
     }
 
@@ -70,19 +89,36 @@ public class QuizTakingController {
     }
 
     private void updateButtons() {
+        // Update Prev/Next/Submit visibility
         view.getBtnPrev().setEnabled(currentQuestionIndex > 0);
         view.getBtnNext().setEnabled(currentQuestionIndex < quiz.getQuestions().size() - 1);
-        view.getBtnSubmit().setEnabled(currentQuestionIndex == quiz.getQuestions().size() - 1);
+        view.getBtnSubmit().setEnabled(true); // Always keep submit enabled (or specific logic)
+
+        // Update Circle Status (Green for answered) 
+        updateCircleStatus();
+    }
+
+    // Helper to turn circles Green if they have an answer recorded
+    private void updateCircleStatus() {
+        for (int i = 0; i < quiz.getQuestions().size(); i++) {
+            // Status 1 = Green (Answered), 0 = Default (Unanswered)
+            int status = (userAnswers[i] != -1) ? 1 : 0;
+            view.setQuestionStatus(i, status);
+        }
     }
 
     private void submitQuiz() {
         saveCurrentAnswer();
+        updateCircleStatus(); // Ensure visuals are up to date
 
         try {
             // Ensure all questions are answered before scoring
-            // NEW: Check for Unanswered Questions
             for (int i = 0; i < userAnswers.length; i++) {
                 if (userAnswers[i] == -1) {
+                    // Navigate user to the specific unanswered question for better UX
+                    currentQuestionIndex = i;
+                    loadQuestion(currentQuestionIndex);
+                    updateButtons();
                     throw new UnansweredQuestionException("You have not answered Question " + (i + 1));
                 }
             }
@@ -95,7 +131,7 @@ public class QuizTakingController {
                 }
             }
 
-            // Save Result (combine: build result, persist score, update student progress)
+            // Save Result
             QuizResult result = new QuizResult(
                     currentStudent.getIdNumber(),
                     quiz.getQuizName(),
@@ -115,7 +151,7 @@ public class QuizTakingController {
             JOptionPane.showMessageDialog(view, message);
             view.dispose();
 
-            // Re-open Dashboard (single instance)
+            // Re-open Dashboard
             StudentDashboardView dashboardView = new StudentDashboardView();
             new StudentDashboardController(dashboardView, currentStudent);
             dashboardView.setVisible(true);
