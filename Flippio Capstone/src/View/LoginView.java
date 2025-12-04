@@ -36,10 +36,10 @@ public class LoginView extends JFrame {
         setSize(900, 550);
         setLocationRelativeTo(null);
         setResizable(true);
-        // Window icon: use Logo.png from Resources (scaled to 60x60), fallback to Prototype Design assets
+        // Window icon: use Logo.png from Resources (scaled to 40x50), fallback to Prototype Design assets
         ImageIcon winIcon = ResourceLoader.loadImageIcon("Logo.png");
         if (winIcon != null) {
-            Image scaled = winIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+            Image scaled = winIcon.getImage().getScaledInstance(40, 50, Image.SCALE_SMOOTH);
             setIconImage(scaled);
         } else {
             ImageIcon fallback = ResourceLoader.loadImageIcon("Prototype Design.png");
@@ -85,8 +85,8 @@ public class LoginView extends JFrame {
         ImageIcon png = ResourceLoader.loadImageIcon("Prototype Design.png");
         if (png == null) png = ResourceLoader.loadImageIcon("Prototype Design.jpg");
         if (png != null) {
-            // Adjusted size per request: 260 x 130
-            Image scaled = png.getImage().getScaledInstance(260, 130, Image.SCALE_SMOOTH);
+            // Adjusted size per request: 250 x 100
+            Image scaled = png.getImage().getScaledInstance(250, 100, Image.SCALE_SMOOTH);
             icon = new ImageIcon(scaled);
         }
         if(icon != null){
@@ -156,8 +156,8 @@ public class LoginView extends JFrame {
         ImageIcon png = ResourceLoader.loadImageIcon("Prototype Design.png");
         if (png == null) png = ResourceLoader.loadImageIcon("Prototype Design.jpg");
         if (png != null) {
-            // Adjusted size per request: 200 x 90
-            Image scaled = png.getImage().getScaledInstance(200, 90, Image.SCALE_SMOOTH);
+            // Adjusted size per request: 200 x 75
+            Image scaled = png.getImage().getScaledInstance(200, 75, Image.SCALE_SMOOTH);
             icon = new ImageIcon(scaled);
         }
         if(icon != null) {
